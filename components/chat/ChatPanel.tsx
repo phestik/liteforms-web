@@ -25,6 +25,7 @@ import type { GoogleLiveBrowserSession, OpenAiRealtimeBrowserSession, RealtimeVo
 import { DistilWhisperWorkerClient, KokoroWorkerClient } from "@/lib/speech/workerClient";
 import type { AsrConfig, AsrRealtimeSession, TtsConfig } from "@/lib/speech";
 import { dispatchAvatarLipSyncFrame } from "@/lib/avatar/lipSyncEvents";
+import { bundledAvatars } from "@/lib/avatars/bundledAvatars";
 import {
   capPreloadUiProgress,
   clampModelProgress,
@@ -52,6 +53,8 @@ type ChatPanelProps = {
   onVrmFileLoad?: (file: File) => void;
   /** Called when the user resets to the built-in default VRM model. */
   onVrmReset?: () => void;
+  /** Called when the user picks one of the bundled avatars. */
+  onSelectBundledAvatar?: (id: string) => void;
   shouldPreloadLocalModels?: boolean;
   preloadSessionId?: number;
   initialLlmConfig?: BaseProviderConfig;
@@ -136,6 +139,7 @@ export function ChatPanel({
   initialVrmFileName,
   onVrmFileLoad,
   onVrmReset,
+  onSelectBundledAvatar,
   shouldPreloadLocalModels = false,
   preloadSessionId = 0,
   initialLlmConfig,
@@ -1143,6 +1147,31 @@ export function ChatPanel({
                 )}
                 <span className="vrm-filename">{vrmFileName || "Default (lobster)"}</span>
               </div>
+              {onSelectBundledAvatar && bundledAvatars.length > 0 && (
+                <div className="bundled-avatars">
+                  <div className="bundled-avatars-label">Bundled avatars (CC0)</div>
+                  <div className="bundled-avatars-grid">
+                    {bundledAvatars.map((avatar) => {
+                      const isActive = vrmFileName === avatar.name;
+                      return (
+                        <button
+                          key={avatar.id}
+                          type="button"
+                          className={`bundled-avatar-card${isActive ? " is-active" : ""}`}
+                          onClick={() => {
+                            setVrmFileName(avatar.name);
+                            onSelectBundledAvatar(avatar.id);
+                          }}
+                          title={avatar.description}
+                        >
+                          <img src={avatar.thumbnailUrl} alt="" className="bundled-avatar-thumb" loading="lazy" />
+                          <span className="bundled-avatar-name">{avatar.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </details>
         </div>
@@ -1354,10 +1383,10 @@ function persistLocalModelMetadata(downloadedIds: LocalModelId[]) {
         storedAt: new Date().toISOString(),
         downloadedIds,
         models: [
-          { id: "gemma", model: GEMMA_MODEL_ID, dtype: "q4f16", device: "webgpu" },
-          { id: "qwen-local", model: QWEN_MODEL_ID, dtype: "q8", device: "webgpu" },
-          { id: "kokoro", model: "onnx-community/Kokoro-82M-v1.0-ONNX", dtype: "fp32", device: "webgpu" },
-          { id: "distil-whisper", model: "onnx-community/distil-small.en", dtype: "q4", device: "webgpu" }
+          { id: "gemma", model: GEMMA_MODEL_ID, dtype: "q4f16", device: "wasm" },
+          { id: "qwen-local", model: QWEN_MODEL_ID, dtype: "q8", device: "wasm" },
+          { id: "kokoro", model: "onnx-community/Kokoro-82M-v1.0-ONNX", dtype: "q8", device: "webgpu" },
+          { id: "distil-whisper", model: "onnx-community/distil-small.en", dtype: "q4", device: "wasm" }
         ]
       })
     );

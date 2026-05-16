@@ -405,6 +405,68 @@ button:disabled {
   white-space: nowrap;
 }
 
+.bundled-avatars {
+  margin-top: 12px;
+}
+
+.bundled-avatars-label {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.bundled-avatars-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bundled-avatar-card {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  font: inherit;
+  gap: 4px;
+  padding: 6px 4px 4px;
+  transition: border-color 120ms, background 120ms;
+}
+
+.bundled-avatar-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.bundled-avatar-card.is-active {
+  background: rgba(120, 220, 255, 0.10);
+  border-color: rgba(120, 220, 255, 0.55);
+}
+
+.bundled-avatar-thumb {
+  aspect-ratio: 1030 / 1440;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+  display: block;
+  object-fit: cover;
+  width: 100%;
+}
+
+.bundled-avatar-name {
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.bundled-avatar-card.is-active .bundled-avatar-name {
+  color: var(--foreground, #fff);
+}
+
 /* ── Model / provider settings ── */
 
 .model-settings {

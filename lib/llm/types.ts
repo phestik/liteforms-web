@@ -10,6 +10,7 @@ export type LlmProviderId =
   | "ollama"
   | "lmstudio"
   | "openclaw"
+  | "hermes"
   | "google"
   | "google-live"
   | "xai"

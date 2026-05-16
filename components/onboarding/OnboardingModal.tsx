@@ -86,10 +86,11 @@ export function OnboardingModal({
   const ttsProviderOptions = getVisibleTtsProviderOptions();
   const sttProviderOptions = getVisibleSttProviderOptions();
   const defaultInitialConfig: BaseProviderConfig = {
-    provider: "anthropic",
-    model: "claude-opus-4-7",
-    baseUrl: "https://api.anthropic.com",
-    endpointMode: "native"
+    provider: "hermes",
+    model: "hermes-agent",
+    baseUrl: process.env.NEXT_PUBLIC_HERMES_BASE_URL || "http://spark-288c:8642/v1",
+    credential: process.env.NEXT_PUBLIC_HERMES_API_KEY,
+    endpointMode: "openai-compatible"
   };
   const visibleInitialLlmConfig =
     initialLlmConfig && llmProviderOptions.some((provider) => provider.id === initialLlmConfig.provider)

@@ -6,7 +6,7 @@ export function normalizeTtsConfig(config: TtsConfig): Required<TtsConfig> {
       provider: "kokoro",
       model: config.model ?? "onnx-community/Kokoro-82M-v1.0-ONNX",
       voice: config.voice ?? "af_bella",
-      dtype: config.dtype ?? "fp32",
+      dtype: config.dtype ?? "q8",
       device: config.device ?? "webgpu",
       speed: config.speed ?? 1.2
     } as Required<TtsConfig>;
@@ -182,7 +182,7 @@ export function normalizeAsrConfig(config: AsrConfig): Required<AsrConfig> {
     return {
       provider: "distil-whisper",
       model: config.model ?? "onnx-community/distil-small.en",
-      device: config.device ?? "webgpu",
+      device: config.device ?? "wasm",
       dtype: config.dtype ?? "q4",
       language: config.language ?? "en",
       autoSend: config.autoSend ?? false

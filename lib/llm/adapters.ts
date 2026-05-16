@@ -13,7 +13,8 @@ type CreateAdapterInput = {
 /** Cloud providers whose APIs block direct browser requests due to CORS. */
 const CLOUD_PROVIDER_IDS = new Set<string>([
   "openai", "anthropic", "google", "xai", "mistral",
-  "cerebras", "nvidia", "openrouter", "groq", "together", "fireworks", "qwen"
+  "cerebras", "nvidia", "openrouter", "groq", "together", "fireworks", "qwen",
+  "hermes"
 ]);
 
 export function createLlmAdapter(input: CreateAdapterInput): LlmAdapter {
@@ -234,7 +235,7 @@ function formatProviderResponseError(response: Response, config: BaseProviderCon
 
 export function providerNeedsCredential(config: BaseProviderConfig) {
   return [
-    "openai", "openai-realtime", "anthropic", "openrouter", "openclaw",
+    "openai", "openai-realtime", "anthropic", "openrouter", "openclaw", "hermes",
     "google", "google-live", "xai", "mistral", "cerebras", "nvidia", "groq", "together", "fireworks", "qwen"
   ].includes(config.provider);
 }

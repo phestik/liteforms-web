@@ -304,6 +304,14 @@ export const LLM_PROVIDER_OPTIONS: LlmProviderOption[] = [
     // OpenClaw exposes agent targets through its OpenAI-compatible HTTP gateway
   },
   {
+    id: "hermes",
+    label: "Hermes Agent (Spark)",
+    tested: true,
+    defaultModel: "hermes-agent",
+    defaultBaseUrl: "http://spark-288c:8642/v1",
+    models: [{ id: "hermes-agent", label: "Goldie (Hermes Agent)" }]
+  },
+  {
     id: "browser-local-qwen",
     label: "Qwen 3.5 0.8B (local)",
     tested: true,
@@ -334,6 +342,7 @@ export const LLM_PROVIDER_VERCEL_AUDIT = {
   ollama: { support: "local-only", reason: VERCEL_LOCAL_ENDPOINT_REASON },
   lmstudio: { support: "local-only", reason: VERCEL_LOCAL_ENDPOINT_REASON },
   openclaw: { support: "local-only", reason: VERCEL_LOCAL_ENDPOINT_REASON },
+  hermes: { support: "local-only", reason: VERCEL_LOCAL_ENDPOINT_REASON },
   google: { support: "supported", reason: "Uses a hosted API endpoint." },
   "google-live": { support: "supported", reason: "Uses Google's hosted realtime endpoint from the browser." },
   xai: { support: "supported", reason: "Uses a hosted API endpoint." },
@@ -384,5 +393,6 @@ export const CREDENTIAL_PROVIDER_IDS: LlmProviderId[] = [
   "together",
   "fireworks",
   "qwen",
-  "openclaw"
+  "openclaw",
+  "hermes"
 ];

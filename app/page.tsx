@@ -11,13 +11,19 @@ import { saveSessionConfig, loadSessionConfig } from "@/lib/storage/sessionConfi
 import { saveCharacterConfig, loadCharacterConfig } from "@/lib/storage/characterConfig";
 import { createIndexedDbVrmRepository } from "@/lib/storage/indexedDbVrmRepository";
 import type { VrmRepository } from "@/lib/storage/vrmRepository";
+import { getBundledAvatarById } from "@/lib/avatars/bundledAvatars";
+import {
+  clearBundledVrmSelection,
+  loadBundledVrmSelection,
+  saveBundledVrmSelection
+} from "@/lib/storage/bundledVrmSelection";
 
 const onboardingStorageKey = "liteforms.onboardingMode";
 
 const defaultCharacter: CharacterConfig = {
-  name: "Clawdia",
+  name: "Goldie",
   pronouns: "SHE",
-  personality: "You are Clawdia, diva of the deep. You're a cranky crustacean. Do you even have a heart? Wait, lobsters have hearts, right? And... just one? Who knows? I bet you do! You have a visual form of a cartoon lobster in a holographic display. Don't include markdown styling, bullet points, numbered lists, URLs, or emojis in your responses - just plain ole text. Be concise.",
+  personality: "You are Goldie, phestik's always-on AI assistant running on the DGX Spark. She/her. Be concise, technical, and opinionated - skip pleasantries and trailing recaps. Match response length to the task: one or two words for status checks, a paragraph only when the question earns it. phestik is a senior UX/UI designer and cares about design in everything; the aesthetic is cyberpunk-mecha-neon-noir. You are running in Liteforms, a holographic avatar app - the VRM body you appear in is a stand-in until phestik picks one. Do not use markdown, bullet points, numbered lists, URLs, or emojis in your responses - everything gets read aloud, so plain prose only.",
   greeting: ""
 };
 
@@ -28,6 +34,7 @@ export default function HomePage() {
   const [character, setCharacter] = useState<CharacterConfig>(() => {
     const saved = loadCharacterConfig();
     if (!saved) return defaultCharacter;
+    if (saved.name === "Clawdia") return defaultCharacter;
     return { name: saved.name, pronouns: saved.pronouns, personality: saved.personality, greeting: saved.greeting };
   });
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -61,8 +68,16 @@ export default function HomePage() {
       setShouldPreloadLocalModels(true);
     }
 
+    const bundledId = loadBundledVrmSelection();
+    const bundled = bundledId ? getBundledAvatarById(bundledId) : undefined;
+    if (bundled) {
+      setModelUrl(bundled.vrmUrl);
+      setRestoredVrmFileName(bundled.name);
+    }
+
     createIndexedDbVrmRepository().then((repo) => {
       vrmRepoRef.current = repo;
+      if (bundled) return null;
       return repo.load();
     }).then((stored) => {
       if (!stored) return;
@@ -92,6 +107,7 @@ export default function HomePage() {
   }, []);
 
   const handleVrmFileLoad = useCallback((file: File) => {
+    clearBundledVrmSelection();
     file.arrayBuffer().then((buf) => {
       vrmRepoRef.current?.save(buf, file.name).catch(() => {
         // Storage failure is non-fatal; the VRM is still loaded for this session.
@@ -102,6 +118,16 @@ export default function HomePage() {
   const handleVrmReset = useCallback(() => {
     setModelUrl(undefined);
     setRestoredVrmFileName(undefined);
+    clearBundledVrmSelection();
+    vrmRepoRef.current?.clear().catch(() => {});
+  }, []);
+
+  const handleSelectBundledAvatar = useCallback((id: string) => {
+    const bundled = getBundledAvatarById(id);
+    if (!bundled) return;
+    saveBundledVrmSelection(id);
+    setModelUrl(bundled.vrmUrl);
+    setRestoredVrmFileName(bundled.name);
     vrmRepoRef.current?.clear().catch(() => {});
   }, []);
 
@@ -151,6 +177,7 @@ export default function HomePage() {
         initialVrmFileName={restoredVrmFileName}
         onVrmFileLoad={handleVrmFileLoad}
         onVrmReset={handleVrmReset}
+        onSelectBundledAvatar={handleSelectBundledAvatar}
         shouldPreloadLocalModels={shouldPreloadLocalModels}
         preloadSessionId={chatPanelKey}
         initialLlmConfig={initialLlmConfig}
