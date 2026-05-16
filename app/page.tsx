@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AvatarScene } from "@/components/avatar/AvatarScene";
 import { ChatPanel, initialLocalModelLoadState } from "@/components/chat/ChatPanel";
-import type { CharacterConfig, LocalModelLoadState } from "@/components/chat/ChatPanel";
+import type { CharacterConfig, LocalModelLoadState, ChatRuntimeStatus } from "@/components/chat/ChatPanel";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
+import { StageMasthead } from "@/components/stage/StageMasthead";
+import { StageStatusRail } from "@/components/stage/StageStatusRail";
 import type { BaseProviderConfig } from "@/lib/llm";
 import type { AsrConfig, RealtimeVoiceConfig, TtsConfig } from "@/lib/speech";
 import { saveSessionConfig, loadSessionConfig } from "@/lib/storage/sessionConfig";
@@ -46,6 +48,16 @@ export default function HomePage() {
   const [initialRealtimeVoiceConfig, setInitialRealtimeVoiceConfig] = useState<RealtimeVoiceConfig | undefined>(undefined);
   const [chatPanelKey, setChatPanelKey] = useState(0);
   const [modalLoadState, setModalLoadState] = useState<LocalModelLoadState[]>(initialLocalModelLoadState);
+  const [runtimeStatus, setRuntimeStatus] = useState<ChatRuntimeStatus>({
+    chatStatus: "idle",
+    speechStatus: "idle",
+    micMode: "dynamic",
+    providerId: "hermes",
+    modelId: "hermes-agent",
+    ttsProviderId: "kokoro",
+    asrProviderId: "distil-whisper",
+    isActiveRealtimeVoice: false
+  });
 
   useEffect(() => {
     const savedMode = localStorage.getItem(onboardingStorageKey);
@@ -92,6 +104,37 @@ export default function HomePage() {
   const handleLocalModelLoadStateChange = useCallback((state: LocalModelLoadState[]) => {
     setModalLoadState(state);
   }, []);
+
+  const handleRuntimeStatusChange = useCallback((status: ChatRuntimeStatus) => {
+    setRuntimeStatus(status);
+  }, []);
+
+  const { endpointLabel, endpointDetail, isConnected, modelLabel } = useMemo(() => {
+    const { providerId, modelId, isActiveRealtimeVoice } = runtimeStatus;
+    if (providerId === "hermes") {
+      return {
+        endpointLabel: "HERMES",
+        endpointDetail: "SPARK :8642",
+        isConnected: true,
+        modelLabel: `${modelId || "hermes-agent"} → Goldie`
+      };
+    }
+    if (providerId === "browser-local-gemma") {
+      return { endpointLabel: "LOCAL", endpointDetail: "BROWSER · GEMMA", isConnected: true, modelLabel: modelId || "Gemma 4 E2B" };
+    }
+    if (providerId === "browser-local-qwen") {
+      return { endpointLabel: "LOCAL", endpointDetail: "BROWSER · QWEN", isConnected: true, modelLabel: modelId || "Qwen 3.5 0.8B" };
+    }
+    if (providerId === "openai") return { endpointLabel: "OPENAI", endpointDetail: "CLOUD", isConnected: true, modelLabel: modelId || "openai" };
+    if (providerId === "anthropic") return { endpointLabel: "ANTHROPIC", endpointDetail: "CLOUD", isConnected: true, modelLabel: modelId || "anthropic" };
+    if (isActiveRealtimeVoice) return { endpointLabel: "REALTIME", endpointDetail: providerId.toUpperCase(), isConnected: true, modelLabel: modelId || providerId };
+    return { endpointLabel: "PROVIDER", endpointDetail: providerId.toUpperCase(), isConnected: false, modelLabel: modelId || providerId };
+  }, [runtimeStatus]);
+
+  const vrmDisplayName = useMemo(() => {
+    if (!restoredVrmFileName) return "Default (lobster)";
+    return restoredVrmFileName.replace(/\.vrm$/i, "");
+  }, [restoredVrmFileName]);
 
   const handleConfigChange = useCallback((llm: BaseProviderConfig, tts: TtsConfig, asr: AsrConfig, realtimeVoice?: RealtimeVoiceConfig) => {
     // Persist mid-session settings changes so they survive a page refresh.
@@ -166,9 +209,33 @@ export default function HomePage() {
 
   return (
     <main className="stage">
-      <section className="avatar-viewport" aria-label="Avatar preview">
-        <AvatarScene modelUrl={modelUrl} />
-      </section>
+      <div className="stage-main">
+        <StageMasthead
+          characterName={character.name}
+          characterPronouns={character.pronouns}
+          endpointLabel={endpointLabel}
+          endpointDetail={endpointDetail}
+          isConnected={isConnected}
+          vrmName={vrmDisplayName}
+        />
+        <section className="avatar-viewport" aria-label="Avatar preview">
+          <div className="avatar-frame" aria-hidden="true">
+            <span className="avatar-frame-corner avatar-frame-corner--tl" />
+            <span className="avatar-frame-corner avatar-frame-corner--tr" />
+            <span className="avatar-frame-corner avatar-frame-corner--bl" />
+            <span className="avatar-frame-corner avatar-frame-corner--br" />
+          </div>
+          <AvatarScene modelUrl={modelUrl} />
+        </section>
+        <StageStatusRail
+          chatStatus={runtimeStatus.chatStatus}
+          speechStatus={runtimeStatus.speechStatus}
+          micMode={runtimeStatus.micMode}
+          modelLabel={modelLabel}
+          voiceLabel={runtimeStatus.ttsProviderId}
+          asrLabel={runtimeStatus.asrProviderId}
+        />
+      </div>
       <ChatPanel
         key={chatPanelKey}
         character={character}
@@ -187,6 +254,7 @@ export default function HomePage() {
         onLocalModelLoadStateChange={handleLocalModelLoadStateChange}
         onConfigChange={handleConfigChange}
         onOpenConfigure={handleConfigureOpen}
+        onRuntimeStatusChange={handleRuntimeStatusChange}
       />
       {showOnboarding && (
         <OnboardingModal

@@ -66,11 +66,23 @@ type ChatPanelProps = {
   onConfigChange?: (llm: BaseProviderConfig, tts: TtsConfig, asr: AsrConfig, realtimeVoice?: RealtimeVoiceConfig) => void;
   /** Called when the user clicks the Configure button in Settings. */
   onOpenConfigure?: () => void;
+  /** Emits a snapshot of runtime status (chat/speech/mic + provider IDs) for the stage masthead + rail. */
+  onRuntimeStatusChange?: (status: ChatRuntimeStatus) => void;
 };
 
 type ChatStatus = "idle" | "streaming" | "error";
 type SpeechStatus = "idle" | "speaking" | "listening" | "transcribing" | "testing" | "error";
 type MicMode = "hold" | "toggle" | "dynamic";
+export type ChatRuntimeStatus = {
+  chatStatus: ChatStatus;
+  speechStatus: SpeechStatus;
+  micMode: MicMode;
+  providerId: string;
+  modelId: string;
+  ttsProviderId: string;
+  asrProviderId: string;
+  isActiveRealtimeVoice: boolean;
+};
 export type LocalModelId = "gemma" | "qwen-local" | "kokoro" | "distil-whisper";
 export type LocalModelLoadState = {
   id: LocalModelId;
@@ -148,7 +160,8 @@ export function ChatPanel({
   initialRealtimeVoiceConfig,
   onLocalModelLoadStateChange,
   onConfigChange,
-  onOpenConfigure
+  onOpenConfigure,
+  onRuntimeStatusChange
 }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     character.greeting ? [{ role: "assistant" as const, content: character.greeting }] : []
@@ -258,6 +271,20 @@ export function ChatPanel({
   useEffect(() => {
     onLocalModelLoadStateChange?.(activeLocalModels);
   }, [activeLocalModels, onLocalModelLoadStateChange]);
+
+  useEffect(() => {
+    if (!onRuntimeStatusChange) return;
+    onRuntimeStatusChange({
+      chatStatus: status,
+      speechStatus,
+      micMode,
+      providerId: config.provider,
+      modelId: config.model,
+      ttsProviderId: getTtsProviderLabel(ttsConfig.provider),
+      asrProviderId: getAsrProviderLabel(asrConfig.provider),
+      isActiveRealtimeVoice: isActiveRealtimeVoiceConfig(realtimeVoiceConfig)
+    });
+  }, [status, speechStatus, micMode, config.provider, config.model, ttsConfig.provider, asrConfig.provider, realtimeVoiceConfig, onRuntimeStatusChange]);
 
   useEffect(() => {
     micModeRef.current = micMode;
@@ -1079,8 +1106,11 @@ export function ChatPanel({
       <div className="panel-sections">
 
       {/* ── Character section (open by default) ── */}
-      <details className="panel-section" open>
-        <summary>Character</summary>
+      <details className="panel-section" data-section="character" open>
+        <summary>
+          <span className="panel-section-num" aria-hidden="true">01</span>
+          <span className="panel-section-title">Character</span>
+        </summary>
         <div className="panel-section-body">
           {isOpenClaw ? (
             <p className="openclaw-note">
@@ -1178,8 +1208,11 @@ export function ChatPanel({
       </details>
 
       {/* ── Settings section (collapsed by default) ── */}
-      <details className="panel-section">
-        <summary>Settings</summary>
+      <details className="panel-section" data-section="settings">
+        <summary>
+          <span className="panel-section-num" aria-hidden="true">02</span>
+          <span className="panel-section-title">Settings</span>
+        </summary>
         <div className="panel-section-body">
 
           <div className="model-settings">
@@ -1279,7 +1312,11 @@ export function ChatPanel({
       </div>{/* end .panel-sections */}
 
       {/* ── Chat ── */}
-      <div className="chat-header">Chat</div>
+      <div className="chat-header" role="heading" aria-level={2}>
+        <span className="chat-header-num" aria-hidden="true">03</span>
+        <span className="chat-header-title">Transcript</span>
+        <span className="chat-header-tail">{character.name.toUpperCase()} · {status === "streaming" ? "STREAMING" : "READY"}</span>
+      </div>
       <div className="message-list" ref={messageListRef}>
         {messages.map((message, index) => (
           <div className={`message ${message.role}`} key={`${message.role}-${index}`}>
@@ -1344,8 +1381,9 @@ export function ChatPanel({
         </div>
         <label className="sr-only" htmlFor="message">Message</label>
         <input id="message" name="message" placeholder="Type a message…" disabled={status === "streaming"} />
-        <button type="submit" className="send-btn" disabled={status === "streaming"}>
-          {status === "streaming" ? "…" : "Send"}
+        <button type="submit" className="send-btn" disabled={status === "streaming"} aria-label={status === "streaming" ? "Streaming…" : "Send message"}>
+          <span className="send-btn-label">{status === "streaming" ? "STREAM" : "SEND"}</span>
+          <span className="send-btn-glyph" aria-hidden="true">{status === "streaming" ? "…" : "→"}</span>
         </button>
       </form>
     </aside>
