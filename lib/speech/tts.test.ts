@@ -200,7 +200,7 @@ describe("TTS adapters", () => {
       words: [{ word: "hello", start: 0, end: 0.25 }]
     });
     expect(worker.synthesize).toHaveBeenCalledWith(
-      expect.objectContaining({ text: "hello", voice: "af_bella", device: "webgpu", dtype: "fp32" })
+      expect.objectContaining({ text: "hello", voice: "af_bella", device: "webgpu", dtype: "q8" })
     );
   });
 

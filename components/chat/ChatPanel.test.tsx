@@ -96,8 +96,8 @@ function renderPanelWithConfig(options: Partial<React.ComponentProps<typeof Chat
 describe("ChatPanel collapsible sections", () => {
   it("renders Character and Settings section headers", () => {
     renderPanel();
-    expect(screen.getByText("Character", { selector: "summary" })).toBeInTheDocument();
-    expect(screen.getByText("Settings", { selector: "summary" })).toBeInTheDocument();
+    expect(screen.getByText("Character", { selector: ".panel-section-title" })).toBeInTheDocument();
+    expect(screen.getByText("Settings", { selector: ".panel-section-title" })).toBeInTheDocument();
   });
 
   it("shows character fields and settings fields without any interaction", () => {
@@ -305,7 +305,7 @@ describe("ChatPanel OpenClaw persona handling", () => {
       }
     });
     fireEvent.change(screen.getByPlaceholderText("Type a message…"), { target: { value: "hello" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     await waitFor(() => {
       expect(vi.mocked(createLlmAdapter)).toHaveBeenCalledWith(
@@ -328,7 +328,7 @@ describe("ChatPanel chat interface", () => {
   it("renders the message composer input and send button", () => {
     renderPanel();
     expect(screen.getByPlaceholderText("Type a message…")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Send" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send message" })).toBeInTheDocument();
   });
 });
 
@@ -348,7 +348,7 @@ describe("ChatPanel message list auto-scroll", () => {
     // Trigger another render by sending a message (streaming mock returns nothing, so status stays idle)
     const input = screen.getByPlaceholderText("Type a message…");
     fireEvent.change(input, { target: { value: "hi" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
     expect(scrollTopValues).toContain(400);
   });
 
@@ -737,7 +737,7 @@ describe("mic auto-submit flow", () => {
     renderPanel(); // default: dynamic mode
 
     fireEvent.change(screen.getByPlaceholderText("Type a message…"), { target: { value: "hi" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Listening for pause" })).toBeInTheDocument();
@@ -757,7 +757,7 @@ describe("mic auto-submit flow", () => {
     chooseMicMode("Hold");
 
     fireEvent.change(screen.getByPlaceholderText("Type a message…"), { target: { value: "hi" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     await waitFor(() => expect(screen.getByRole("button", { name: "Hold to talk" })).not.toBeDisabled());
     await new Promise((r) => setTimeout(r, 0));
@@ -776,7 +776,7 @@ describe("mic auto-submit flow", () => {
     chooseMicMode("Tap");
 
     fireEvent.change(screen.getByPlaceholderText("Type a message…"), { target: { value: "hi" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     await waitFor(() => expect(screen.getByRole("button", { name: "Start recording" })).not.toBeDisabled());
     await new Promise((r) => setTimeout(r, 0));
@@ -841,7 +841,7 @@ describe("ChatPanel Settings readouts", () => {
     });
 
     fireEvent.change(screen.getByPlaceholderText("Type a message…"), { target: { value: "hello" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
     await waitFor(() => {
       expect(vi.mocked(createLlmAdapter)).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -912,7 +912,7 @@ describe("ChatPanel streaming TTS pipeline", () => {
 
     renderPanel();
     fireEvent.change(screen.getByPlaceholderText("Type a message…"), { target: { value: "hi" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     // Synthesis of the first sentence should start before the stream ends
     await waitFor(() => {
@@ -949,7 +949,7 @@ describe("ChatPanel streaming TTS pipeline", () => {
 
     renderPanel();
     fireEvent.change(screen.getByPlaceholderText("Type a message…"), { target: { value: "hi" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     await waitFor(() => {
       expect(synthesize).toHaveBeenCalledTimes(3);
@@ -976,7 +976,7 @@ describe("ChatPanel streaming TTS pipeline", () => {
 
     renderPanel();
     fireEvent.change(screen.getByPlaceholderText("Type a message…"), { target: { value: "hi" } });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     await waitFor(() => {
       expect(synthesize).toHaveBeenCalled();

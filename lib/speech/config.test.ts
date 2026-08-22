@@ -9,14 +9,14 @@ describe("speech provider config", () => {
       voice: "af_bella",
       model: "onnx-community/Kokoro-82M-v1.0-ONNX",
       device: "webgpu",
-      dtype: "fp32",
+      dtype: "q8",
       speed: 1.2
     });
 
     expect(normalizeAsrConfig({ provider: "distil-whisper" })).toMatchObject({
       provider: "distil-whisper",
       model: "onnx-community/distil-small.en",
-      device: "webgpu",
+      device: "wasm",
       dtype: "q4",
       language: "en",
       autoSend: false
