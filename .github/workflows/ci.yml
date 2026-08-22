@@ -1,0 +1,73 @@
+# This repo shipped for months with no CI at all. The cost showed up on
+# 2026-08-22: `dev` was 17-red across 6 files, and not one of those failures was
+# a defect — every one was a test still asserting the *old* contract after a
+# deliberate change (t_a4c7da1c). Nothing was watching, so the drift accumulated
+# silently until someone went looking.
+#
+# This workflow is added only now, on top of a green `dev` (597 passed / 655
+# collected). Adding it while `dev` was red would have pinned a red baseline and
+# become a check everyone learns to ignore — the same "working check with no
+# trigger" failure mode this fleet already hit twice elsewhere (t_e8466929).
+#
+# ACTION VERSIONS ARE A DEADLINE, NOT A PREFERENCE. checkout@v7 and
+# setup-bun@v2 are the current majors. Node20 actions are being force-run on
+# Node24 with a shim that will eventually disappear, at which point the job
+# fails to start and nothing in this file looks wrong.
+
+name: CI
+
+# `main` is in the trigger list on purpose, not just `dev`. This fork's default
+# branch is `main`, so a dev→main promotion PR would otherwise get zero
+# check-runs — exactly how llm-workspace once merged 38 commits unchecked
+# (t_2afe2ee0). A workflow only runs if it exists on the *target* branch, so
+# listing it here costs nothing until that first promotion.
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: liteforms-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'    # MUST match the box (`bun --version`)
+
+      # bun, never npm (house rule) — and --frozen-lockfile so CI resolves the
+      # exact tree the box does rather than silently floating a caret range.
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # The check this repo actually lacked. vitest, 48 files.
+      - name: Test
+        run: bun run test
+
+      # Lint and build were BOTH verified green before being wired up here
+      # (0 errors / 22 warnings, and a clean 9/9 static-page build), so the
+      # first run of this workflow starts green rather than red for a new
+      # reason. Neither had ever been enforced in this repo.
+      #
+      # `bun run lint` is `eslint .` with no --max-warnings, so today's 22
+      # warnings pass and only an *error* fails the job. Tightening that into a
+      # ratchet (pin the count in package.json, lower it as warnings are fixed)
+      # is a deliberate follow-up, not part of standing CI up.
+      - name: Lint
+        run: bun run lint
+
+      # `next build` is the one step with a full type-check + bundle, so it
+      # catches what unit tests cannot: a type error or a broken import that
+      # only surfaces when the app is actually assembled.
+      - name: Build
+        run: bun run build
