@@ -37,7 +37,7 @@ describe("global CSS", () => {
     const avatarSceneRule = cssRule(".avatar-scene");
 
     expect(avatarSceneRule).toContain("aspect-ratio: 9 / 16");
-    expect(avatarSceneRule).toContain("calc((100vh - 144px) * 9 / 16)");
+    expect(avatarSceneRule).toContain("calc((100vh - 240px) * 9 / 16)");
     expect(avatarSceneRule).not.toContain("aspect-ratio: 1");
   });
 

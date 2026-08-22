@@ -281,10 +281,10 @@ describe("OnboardingModal LLM step", () => {
     expect(screen.getByRole("option", { name: /google live/i })).toBeInTheDocument();
   });
 
-  it("defaults to Anthropic API (anthropic)", () => {
+  it("defaults to the Hermes gateway (hermes)", () => {
     renderModal();
     goToLlmStep();
-    expect(screen.getByRole("combobox", { name: /model provider/i })).toHaveValue("anthropic");
+    expect(screen.getByRole("combobox", { name: /model provider/i })).toHaveValue("hermes");
   });
 
   it("hides model dropdown for browser-local-gemma (only one model)", () => {
@@ -510,7 +510,7 @@ describe("OnboardingModal STT step", () => {
     fireEvent.click(screen.getByRole("button", { name: /start liteforms/i }));
     expect(onUseCustom).toHaveBeenCalledOnce();
     expect(onUseCustom).toHaveBeenCalledWith(
-      expect.objectContaining({ provider: "anthropic" }),
+      expect.objectContaining({ provider: "hermes" }),
       expect.objectContaining({ provider: "kokoro" }),
       expect.objectContaining({ provider: "distil-whisper" })
     );
