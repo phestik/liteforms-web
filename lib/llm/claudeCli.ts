@@ -19,6 +19,7 @@ const CLAUDE_CLI_MODEL_ALIASES: Record<string, string> = {
   "claude-opus-4-7": "opus",
   "claude-opus-4-6": "opus",
   "claude-opus-4-5": "opus",
+  "claude-sonnet-5": "sonnet",
   "claude-sonnet-4-6": "sonnet",
   "claude-sonnet-4-5": "sonnet",
   "claude-haiku-4-5": "haiku"
