@@ -5,6 +5,7 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { OnboardingModal } from "./OnboardingModal";
 import type { LocalModelLoadState } from "@/components/chat/ChatPanel";
 import { OPENCLAW_ENABLE_CHAT_COMPLETIONS_COMMAND } from "@/lib/llm/openclawSetup";
+import { getVisibleLlmProviderOptions } from "@/lib/llm/providerOptions";
 
 afterEach(cleanup);
 
@@ -283,6 +284,54 @@ describe("OnboardingModal LLM step", () => {
 
   it("defaults to the Hermes gateway (hermes)", () => {
     renderModal();
+    goToLlmStep();
+    expect(screen.getByRole("combobox", { name: /model provider/i })).toHaveValue("hermes");
+  });
+
+  // ── Default provider must exist in its own dropdown (t_c3f22e27) ────────────
+  // Latent since 981b427: defaultInitialConfig unconditionally named `hermes`,
+  // which getVisibleLlmProviderOptions drops on a Vercel deployment as
+  // local-only. The <select> then had no matching option and "Start Liteforms"
+  // submitted provider "hermes" pointing at http://spark-288c:8642/v1 —
+  // unreachable from Vercel. Never bit us because this fork deploys to the
+  // Spark host, where isVercelDeployment is false.
+  //
+  // These assert the INVARIANT (the default is in the visible list), not the
+  // literal that satisfies it today, so they survive the next provider change.
+
+  it("submits the provider the dropdown is showing, on a Vercel deployment", () => {
+    // This is the defect stated exactly. With an unfiltered `hermes` default the
+    // <select> has no matching <option>, so the browser falls back to displaying
+    // the FIRST option while component state still holds "hermes" — the user is
+    // shown Anthropic and Start submits an unreachable spark-288c endpoint.
+    //
+    // Asserting `select.value` alone does NOT catch this and a first cut of this
+    // test passed against the fix removed: the select reports the fallback
+    // option, which is legitimately in the visible list. Only comparing what is
+    // DISPLAYED against what is SUBMITTED closes the gap.
+    const onUseCustom = vi.fn();
+    renderModal({ isVercelDeployment: true, onUseCustom });
+    goToLlmStep();
+    const shown = (screen.getByRole("combobox", { name: /model provider/i }) as HTMLSelectElement).value;
+    goToLoadingStep();
+    const submitted = onUseCustom.mock.calls[0][0] as { provider: string };
+    expect(submitted.provider).toBe(shown);
+  });
+
+  it("submits a visible provider when Start is pressed on a Vercel deployment", () => {
+    const onUseCustom = vi.fn();
+    renderModal({ isVercelDeployment: true, onUseCustom });
+    goToLoadingStep();
+    expect(onUseCustom).toHaveBeenCalled();
+    const submitted = onUseCustom.mock.calls[0][0] as { provider: string };
+    const visibleIds = getVisibleLlmProviderOptions({ isVercelDeployment: true }).map((p) => p.id);
+    expect(visibleIds).toContain(submitted.provider);
+  });
+
+  it("still defaults to hermes when the deployment is not Vercel", () => {
+    // The Spark path is the one that works and must not change: hermes IS
+    // visible and IS reachable there. The fix is scoped to the hidden case.
+    renderModal({ isVercelDeployment: false });
     goToLlmStep();
     expect(screen.getByRole("combobox", { name: /model provider/i })).toHaveValue("hermes");
   });

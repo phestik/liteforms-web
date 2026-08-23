@@ -85,13 +85,29 @@ export function OnboardingModal({
   const llmProviderOptions = getVisibleLlmProviderOptions({ isVercelDeployment });
   const ttsProviderOptions = getVisibleTtsProviderOptions();
   const sttProviderOptions = getVisibleSttProviderOptions();
-  const defaultInitialConfig: BaseProviderConfig = {
+  // This fork's deployment is the Spark host, where `hermes` is visible and the
+  // gateway is reachable, so it is the right default there. On a Vercel
+  // deployment it is not: `hermes` is audited local-only and getVisibleLlm-
+  // ProviderOptions drops it, leaving the <select> with no matching option and
+  // "Start Liteforms" submitting an unreachable spark-288c endpoint.
+  //
+  // The guard filters against the SAME visible list `initialLlmConfig` is
+  // checked against below, rather than branching on `isVercelDeployment`
+  // directly. The invariant is "the default provider is one the user can
+  // actually see" — tying it to visibility keeps that true whatever future
+  // reason removes a provider, where an isVercelDeployment branch would only
+  // cover today's reason.
+  const hermesInitialConfig: BaseProviderConfig = {
     provider: "hermes",
     model: "hermes-agent",
     baseUrl: process.env.NEXT_PUBLIC_HERMES_BASE_URL || "http://spark-288c:8642/v1",
     credential: process.env.NEXT_PUBLIC_HERMES_API_KEY,
     endpointMode: "openai-compatible"
   };
+  const defaultInitialConfig: BaseProviderConfig =
+    llmProviderOptions.some((provider) => provider.id === hermesInitialConfig.provider)
+      ? hermesInitialConfig
+      : getDefaultProviderConfig();
   const visibleInitialLlmConfig =
     initialLlmConfig && llmProviderOptions.some((provider) => provider.id === initialLlmConfig.provider)
       ? initialLlmConfig
